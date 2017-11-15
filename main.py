@@ -5,7 +5,7 @@ import sys
 
 infinity = float("inf")
 # d = enchant.Dict("en_US")
-word = input
+word_play = input
 
 # Check version of Python
 if sys.version_info[0] < 3:
@@ -13,19 +13,20 @@ if sys.version_info[0] < 3:
 	sys.exit()
 
 class State:
-	def __init__(self, turn):
+	def __init__(self, turn, word):
 		self.word = word
 		self.turn = turn
 
 	"""Return whether this state is a terminal state or not"""
-	def is_terminal(self, string):
+	def is_terminal(self, string, node):
 		"""
 		This isn't working for me for some reason
 		"""
 		# if d.check(self.word):
-		tmp = Node()
-		if (tmp.search(string)):
+		if (node.search(string)):
 			return True
+		else:
+			return False
 		
 	"""Return all valid successors of this state"""
 	def successors(self):
@@ -125,7 +126,6 @@ def fileparse(filename):
 	root = Node()	
 	line = fd.readline().strip('\r\n') # Remove newline characters \r\n
 
-
 	while line !='':
 		root.add_item(line)
 		line = fd.readline().strip('\r\n')
@@ -135,12 +135,13 @@ def fileparse(filename):
 if __name__ == "__main__":
 	# Set up players to alternate
 	players = (computer_move, player_move)
-
+	turn = 1
 	if len(sys.argv) != 2:
 		print("Usage: ", sys.argv[0], "dictionary_file.txt")
 		sys.exit(2)
 		
 	root  = fileparse(sys.argv[1])
+	board = State(turn, root)
 
 	print("Input:", end=' ')
 	input = input()
@@ -148,7 +149,7 @@ if __name__ == "__main__":
 
 	while True:
 		# Check for game end at begining of turn
-		if state.is_terminal():
+		if board.is_terminal(input, root):
 			break
 
 		# Prompt player for move
