@@ -18,11 +18,15 @@ class State:
 		self.turn = turn
 
 	"""Return whether this state is a terminal state or not"""
-	def is_terminal(self):
+	def is_terminal(self, string):
 		"""
 		This isn't working for me for some reason
 		"""
 		# if d.check(self.word):
+		tmp = Node()
+		if (tmp.search(string)):
+			return True
+		
 	"""Return all valid successors of this state"""
 	def successors(self):
 		pass
@@ -79,7 +83,7 @@ class Node:
 
 		if list(self.next_node.keys()) == []:
 			print("Match:",sofar)
-			return
+			return True
 			
 		if self.word_marker == True:
 			print("Match:",sofar)
@@ -93,7 +97,7 @@ class Node:
 		'''Perform auto completion search and print the autocomplete results'''
 		# Make state transition based on the input characters. 
 
-		# When the input characters becomes exhaused, perform dfs() so that the trie gets traversed upto leaves and print the state characters
+		# When the input characters becomes exhaused, perform dfs() so that the tree gets traversed upto leaves and print the state characters
 
 		if len(string) > 0:
 			key = string[0]
@@ -139,7 +143,7 @@ if __name__ == "__main__":
 	root  = fileparse(sys.argv[1])
 
 	print("Input:", end=' ')
-	input=input()
+	input = input()
 	root.search(input)
 
 	while True:
