@@ -137,7 +137,6 @@ if __name__ == "__main__":
 		sys.exit(2)
 		
 	root  = fileparse(sys.argv[1])
-	board = State(turn, root)
 
 	print("Input:", end=' ')
 	input = input()
