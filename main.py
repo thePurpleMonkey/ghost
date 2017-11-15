@@ -13,20 +13,16 @@ if sys.version_info[0] < 3:
 	sys.exit()
 
 class State:
-	def __init__(self, turn, word):
-		self.word = word
-		self.turn = turn
+	def __init__(self):
+		pass
 
 	"""Return whether this state is a terminal state or not"""
-	def is_terminal(self, string, node):
+	def is_terminal():
 		"""
 		This isn't working for me for some reason
 		"""
 		# if d.check(self.word):
-		if (node.search(string)):
-			return True
-		else:
-			return False
+		pass
 		
 	"""Return all valid successors of this state"""
 	def successors(self):
@@ -84,7 +80,7 @@ class Node:
 
 		if list(self.next_node.keys()) == []:
 			print("Match:",sofar)
-			return True
+			return
 			
 		if self.word_marker == True:
 			print("Match:",sofar)
