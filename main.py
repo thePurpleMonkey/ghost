@@ -1,6 +1,6 @@
 # coding=utf-8
 
-import sys
+import sys, mmap, re
 # import enchant
 
 infinity = float("inf")
@@ -12,21 +12,40 @@ if sys.version_info[0] < 3:
 	print("This program designed to be run with Python 3. Please run again with the Python version 3 interpreter.")
 	sys.exit()
 
+mm = None
+
 class State:
-	def __init__(self):
-		pass
+	def __init__(self, prev):
+		self.prev = prev
+		#self.node = node
+
+	def __hash__(self):
+		return hash(self.prev)
+
+	def __eq__(self, other):
+		return self.prev == other.prev
+
+	def __repr__(self):
+		return str(self)
+
+	def __str__(self):
+		return "State(prev='{}')".format(self.prev)
 
 	"""Return whether this state is a terminal state or not"""
-	def is_terminal():
+	def is_terminal(self):
 		"""
 		This isn't working for me for some reason
 		"""
 		# if d.check(self.word):
-		pass
+		
+		return bool(re.search("\r\n{}\r\n".format(self.prev).encode("utf-8"), mm))
+		# match = re.search("\r\n{}\r\n".format(self.prev).encode("utf-8"), mm)
+		# print(self, "is_terminal?", bool(match), match)
+		# return bool(match)
 		
 	"""Return all valid successors of this state"""
 	def successors(self):
-		pass
+		return list(set([State(self.prev + match.decode("utf-8")[len(self.prev)+2]) for match in re.findall("\r\n{}..*\r\n".format(self.prev).encode("utf-8"), mm)]))
 
 """Return the state after the computer has made its move"""
 def computer_move(state):
@@ -135,6 +154,24 @@ if __name__ == "__main__":
 	if len(sys.argv) != 2:
 		print("Usage: ", sys.argv[0], "dictionary_file.txt")
 		sys.exit(2)
+		
+	file = open(sys.argv[1], 'rb')
+	mm = mmap.mmap(file.fileno(), 0, access=mmap.ACCESS_READ)
+
+	test = State("sample")
+	print(test, test.is_terminal(), test.successors())
+	test = State("kern")
+	print(test, test.is_terminal(), test.successors())
+	test = State("xkcd")
+	print(test, test.is_terminal(), test.successors())
+	test = State("")
+
+	print()
+	print(test)
+	while not test.is_terminal():
+		#print(test.successors())
+		test = test.successors()[0]
+		print(test, test.is_terminal())
 		
 	root  = fileparse(sys.argv[1])
 
