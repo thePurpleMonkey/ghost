@@ -7,6 +7,8 @@ infinity = float("inf")
 # d = enchant.Dict("en_US")
 word_play = input
 
+popMax = []
+
 # Check version of Python
 if sys.version_info[0] < 3:
 	print("This program designed to be run with Python 3. Please run again with the Python version 3 interpreter.")
@@ -50,6 +52,35 @@ class State:
 """Return the state after the computer has made its move"""
 def computer_move(state):
 	pass
+
+"""return a letter to play"""
+def min_max_search(string):
+	# maxList = []
+	# minList = []
+	letterToPlay  = {}
+	inLength = len(string)
+
+	for item in popMax:
+		if(inLength%2 == len(item)%2):
+			# minList.append(item)
+			if not item[inLength] in letterToPlay:
+				letterToPlay[item[inLength]] = -1
+			else:
+				letterToPlay[item[inLength]] -= 1
+		else:
+			# maxList.append(item)
+			if not item[inLength] in letterToPlay:
+				letterToPlay[item[inLength]] = 1
+			else:
+				letterToPlay[item[inLength]] += 1
+
+	for element, val in letterToPlay.items():
+		print(element, val)
+	v=list(letterToPlay.values())
+	k=list(letterToPlay.keys())
+	toPlay = k[v.index(max(v))]
+
+	return toPlay
 
 """Return the state after the player has made their move"""
 def player_move(state):
@@ -98,11 +129,13 @@ class Node:
 		# Hence print sofar (sofar is a string containing the path as character sequences through which state transition occured)
 
 		if list(self.next_node.keys()) == []:
-			print("Match:",sofar)
+			popMax.append(sofar)
+			# print("in dfs ...keys() == []:",sofar)
 			return
 			
 		if self.word_marker == True:
-			print("Match:",sofar)
+			popMax.append(sofar)
+			# print("in dfs word_marker == True:",sofar)
 
 		# Recursively call dfs for all the nodes pointed by keys in the hash
 
@@ -126,7 +159,7 @@ class Node:
 				print("No match")
 		else:
 			if self.word_marker == True:
-				print("Match:",sofar)
+				print("in search:",sofar)
 
 			for key in list(self.next_node.keys()):
 				self.next_node[key].dfs(sofar+key)
@@ -154,7 +187,7 @@ if __name__ == "__main__":
 	if len(sys.argv) != 2:
 		print("Usage: ", sys.argv[0], "dictionary_file.txt")
 		sys.exit(2)
-		
+		"""
 	file = open(sys.argv[1], 'rb')
 	mm = mmap.mmap(file.fileno(), 0, access=mmap.ACCESS_READ)
 
@@ -169,15 +202,17 @@ if __name__ == "__main__":
 	print()
 	print(test)
 	while not test.is_terminal():
-		#print(test.successors())
+		# print(test.successors())
 		test = test.successors()[0]
 		print(test, test.is_terminal())
-		
+	"""
 	root  = fileparse(sys.argv[1])
 
 	print("Input:", end=' ')
 	input = input()
 	root.search(input)
+	letter = str(min_max_search(input))
+	print("back in main and: " + letter)
 
 	while True:
 		# Check for game end at begining of turn
