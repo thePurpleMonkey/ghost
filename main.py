@@ -64,15 +64,15 @@ def min_max_search(string):
 		if(inLength%2 == len(item)%2):
 			# minList.append(item)
 			if not item[inLength] in letterToPlay:
-				letterToPlay[item[inLength]] = -1
-			else:
-				letterToPlay[item[inLength]] -= 1
-		else:
-			# maxList.append(item)
-			if not item[inLength] in letterToPlay:
 				letterToPlay[item[inLength]] = 1
 			else:
 				letterToPlay[item[inLength]] += 1
+		else:
+			# maxList.append(item)
+			if not item[inLength] in letterToPlay:
+				letterToPlay[item[inLength]] = -1
+			else:
+				letterToPlay[item[inLength]] -= 1
 
 	for element, val in letterToPlay.items():
 		print(element, val)
