@@ -1,6 +1,7 @@
 # coding=utf-8
 
-import sys, mmap, re, random
+import sys, mmap, re, random, urllib.request
+words = None
 
 infinity = float("inf")
 
@@ -8,8 +9,6 @@ infinity = float("inf")
 if sys.version_info[0] < 3:
 	print("This program designed to be run with Python 3. Please run again with the Python version 3 interpreter.")
 	sys.exit()
-
-mm = None
 
 class State:
 	def __init__(self, prev, turn, challenge=False):
@@ -32,11 +31,11 @@ class State:
 
 	"""Return whether this state is a terminal state (i.e. spells a word)"""
 	def is_terminal(self):
-		return bool(re.search("\r\n{}\r\n".format(self.prev).encode("utf-8"), mm))
+		return bool(re.search("\n{}\n".format(self.prev), words))
 		
 	"""Return all valid successors of this state"""
 	def successors(self):
-		return list(set([State(self.prev + match.decode("utf-8")[len(self.prev)+2], (self.turn+1)%2) for match in re.findall("\r\n{}..*\r\n".format(self.prev).encode("utf-8"), mm)]))
+		return list(set([State(self.prev + match[len(self.prev)+2], (self.turn+1)%2) for match in re.findall("\n{}..*\n".format(self.prev), words)]))
 
 """Return the state after the computer has made its move"""
 def computer_move(state):
@@ -197,11 +196,11 @@ def fileparse(filename):
 	fd = open(filename)
 
 	root = Node()	
-	line = fd.readline().strip('\r\n') # Remove newline characters \r\n
+	line = fd.readline().strip('\n') # Remove newline characters \n
 
 	while line !='':
 		root.add_item(line)
-		line = fd.readline().strip('\r\n')
+		line = fd.readline().strip('\n')
 
 	return root
 
@@ -210,12 +209,22 @@ if __name__ == "__main__":
 	players = (computer_move, player_move)
 	turn = random.randint(0, 1)	# Choose a random player to go first
 
+	# try:
+	# 	# Get online dictionary
+	# 	words = urllib.request.urlopen("https://raw.githubusercontent.com/eneko/data-repository/master/data/words.txt").read().decode("utf-8")
+	# 	# print(type(words))
+	# 	# print("Newline style: ", ("Windows \\r\\n" if "\r\n" in words >= 0 else "Unix \\n"))
+	# except Exception as e:
+	# 	print("Error obtaining online dictionary: {}".format(e))
+	# 	print("Falling back to local dictionary")
+
 	if len(sys.argv) != 2:
 		print("Usage: ", sys.argv[0], "dictionary_file.txt")
 		sys.exit(2)
 
-	file = open(sys.argv[1], 'rb')
-	mm = mmap.mmap(file.fileno(), 0, access=mmap.ACCESS_READ)
+	words = open(sys.argv[1], 'rt').read()
+		# print("Newline style: ", ("Windows \\r\\n" if words.find("\r\n") >= 0 else "Unix \\n"))
+
 	state = State("", turn)
 
 	while True:
@@ -229,7 +238,7 @@ if __name__ == "__main__":
 
 			break
 		if state.word:
-			is_word = bool(re.search("\r\n{}\r\n".format(state.word).encode("utf-8"), mm))
+			is_word = bool(re.search("\n{}\n".format(state.word), words))
 			if (is_word and state.turn == 1) or (not is_word and state.turn == 0):
 				print("You win!")
 			else:
