@@ -17,9 +17,11 @@ if sys.version_info[0] < 3:
 mm = None
 
 class State:
-	def __init__(self, prev):
+	def __init__(self, prev, turn, challenge=False):
 		self.prev = prev
-		#self.node = node
+		self.turn = turn
+		self.challenge = challenge
+		self.word = None
 
 	def __hash__(self):
 		return hash(self.prev)
@@ -33,58 +35,80 @@ class State:
 	def __str__(self):
 		return "State(prev='{}')".format(self.prev)
 
-	"""Return whether this state is a terminal state or not"""
+	"""Return whether this state is a terminal state (i.e. spells a word)"""
 	def is_terminal(self):
-		"""
-		This isn't working for me for some reason
-		"""
-		# if d.check(self.word):
-		
 		return bool(re.search("\r\n{}\r\n".format(self.prev).encode("utf-8"), mm))
-		# match = re.search("\r\n{}\r\n".format(self.prev).encode("utf-8"), mm)
-		# print(self, "is_terminal?", bool(match), match)
-		# return bool(match)
 		
 	"""Return all valid successors of this state"""
 	def successors(self):
-		return list(set([State(self.prev + match.decode("utf-8")[len(self.prev)+2]) for match in re.findall("\r\n{}..*\r\n".format(self.prev).encode("utf-8"), mm)]))
+		return list(set([State(self.prev + match.decode("utf-8")[len(self.prev)+2], (self.turn+1)%2) for match in re.findall("\r\n{}..*\r\n".format(self.prev).encode("utf-8"), mm)]))
 
 """Return the state after the computer has made its move"""
 def computer_move(state):
-	pass
+	#return State(state.prev, (state.turn+1)%2) # nop
+	return min_max_search(state)
 
-"""return a letter to play"""
-def min_max_search(string):
-	# maxList = []
-	# minList = []
-	letterToPlay  = {}
-	inLength = len(string)
+"""Perform Minimax search for optimal next move"""
+def min_max_search(state):
+	successors = []
 
-	for item in popMax:
-		if(inLength%2 == len(item)%2):
-			# minList.append(item)
-			if not item[inLength] in letterToPlay:
-				letterToPlay[item[inLength]] = 1
-			else:
-				letterToPlay[item[inLength]] += 1
-		else:
-			# maxList.append(item)
-			if not item[inLength] in letterToPlay:
-				letterToPlay[item[inLength]] = -1
-			else:
-				letterToPlay[item[inLength]] -= 1
+	# Iterate over each successor of this state
+	for successor in state.successors():
+		result = min_search(successor, -infinity, infinity)
 
-	for element, val in letterToPlay.items():
-		print(element, val)
-	v=list(letterToPlay.values())
-	k=list(letterToPlay.keys())
-	toPlay = k[v.index(max(v))]
+		successors.append((result, successor))
 
-	return toPlay
+	if len(successors) > 0:
+		return sorted(successors, key=lambda x: x[0])[0][1]
+	else:
+		state.challenge = True
+		state.turn = (state.turn+1)%2
+		return state
+
+def max_search(state, alpha, beta):
+	if state.is_terminal():
+		return state.turn
+
+	v = -infinity
+
+	for successor in state.successors():
+		result = min_search(successor, alpha, beta)
+
+		v = max(v, result)
+
+		if v >= beta:
+			return v
+
+		alpha = max(alpha, v)
+
+	return v
+
+def min_search(state, alpha, beta):
+	if state.is_terminal():
+		return state.turn
+
+	v = infinity
+
+	for successor in state.successors():
+		result = max_search(successor, alpha, beta)
+
+		v = min(v, result)
+		if v <= alpha:
+			return v
+
+		beta = min(beta, v)
+
+	return v
 
 """Return the state after the player has made their move"""
 def player_move(state):
-    pass
+	print("Current letters:", state.prev)
+	if not state.challenge:
+		new_letter = input("Please enter a letter to play: ")[0].lower()
+		return State(state.prev + new_letter, (state.turn+1)%2)
+	else:
+		state.word = input("You've been challenged! Please type a word that begins with the current letters: ").strip().lower()
+		return state
 
 class Node:
 	def __init__(self):
@@ -183,41 +207,35 @@ def fileparse(filename):
 if __name__ == "__main__":
 	# Set up players to alternate
 	players = (computer_move, player_move)
-	turn = 1
+	turn = 1 # Human player goes first
+
 	if len(sys.argv) != 2:
 		print("Usage: ", sys.argv[0], "dictionary_file.txt")
 		sys.exit(2)
-		"""
+
 	file = open(sys.argv[1], 'rb')
 	mm = mmap.mmap(file.fileno(), 0, access=mmap.ACCESS_READ)
-
-	test = State("sample")
-	print(test, test.is_terminal(), test.successors())
-	test = State("kern")
-	print(test, test.is_terminal(), test.successors())
-	test = State("xkcd")
-	print(test, test.is_terminal(), test.successors())
-	test = State("")
-
-	print()
-	print(test)
-	while not test.is_terminal():
-		# print(test.successors())
-		test = test.successors()[0]
-		print(test, test.is_terminal())
-	"""
-	root  = fileparse(sys.argv[1])
-
-	print("Input:", end=' ')
-	input = input()
-	root.search(input)
-	letter = str(min_max_search(input))
-	print("back in main and: " + letter)
+	state = State("", turn)
 
 	while True:
 		# Check for game end at begining of turn
-		if board.is_terminal(input, root):
+		if state.is_terminal():
+			print("Game over")
+			if (state.turn):
+				print("Your opponent spelled '{}'. You win!".format(state.prev))
+			else:
+				print("You spelled '{}'. You lose. :(".format(state.prev))
+
 			break
+		if state.word:
+			is_word = bool(re.search("\r\n{}\r\n".format(state.word).encode("utf-8"), mm))
+			if (is_word and state.turn == 1) or (not is_word and state.turn == 0):
+				print("You win!")
+			else:
+				print("You lose.")
+
+			break
+
 
 		# Prompt player for move
 		state = players[state.turn](state)
