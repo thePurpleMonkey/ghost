@@ -1,13 +1,8 @@
 # coding=utf-8
 
-import sys, mmap, re
-# import enchant
+import sys, mmap, re, random
 
 infinity = float("inf")
-# d = enchant.Dict("en_US")
-word_play = input
-
-popMax = []
 
 # Check version of Python
 if sys.version_info[0] < 3:
@@ -59,10 +54,12 @@ def min_max_search(state):
 		successors.append((result, successor))
 
 	if len(successors) > 0:
+		# We found at least one valid successor
 		return sorted(successors, key=lambda x: x[0])[0][1]
 	else:
+		# There are no valid successors. Player must not have a word
 		state.challenge = True
-		state.turn = (state.turn+1)%2
+		state.turn = (state.turn+1)%2	# Change turn to player
 		return state
 
 def max_search(state, alpha, beta):
@@ -104,13 +101,17 @@ def min_search(state, alpha, beta):
 def player_move(state):
 	print("Current letters:", state.prev)
 	if not state.challenge:
+		# Not being challenged, enter a letter
 		new_letter = input("Please enter a letter to play: ")[0].lower()
 		return State(state.prev + new_letter, (state.turn+1)%2)
 	else:
+		# We've been challenged. Must type in a valid word or we lose
 		state.word = input("You've been challenged! Please type a word that begins with the current letters: ").strip().lower()
 		return state
 
 class Node:
+	popMax = []	# Static class member
+
 	def __init__(self):
 		self.next_node = {}	#Initialize an empty hash (python dictionary)
 
@@ -153,12 +154,12 @@ class Node:
 		# Hence print sofar (sofar is a string containing the path as character sequences through which state transition occured)
 
 		if list(self.next_node.keys()) == []:
-			popMax.append(sofar)
+			self.popMax.append(sofar)
 			# print("in dfs ...keys() == []:",sofar)
 			return
 			
 		if self.word_marker == True:
-			popMax.append(sofar)
+			self.popMax.append(sofar)
 			# print("in dfs word_marker == True:",sofar)
 
 		# Recursively call dfs for all the nodes pointed by keys in the hash
@@ -207,7 +208,7 @@ def fileparse(filename):
 if __name__ == "__main__":
 	# Set up players to alternate
 	players = (computer_move, player_move)
-	turn = 1 # Human player goes first
+	turn = random.randint(0, 1)	# Choose a random player to go first
 
 	if len(sys.argv) != 2:
 		print("Usage: ", sys.argv[0], "dictionary_file.txt")
