@@ -18,11 +18,12 @@ with open("Oxford English Dictionary.txt", "r") as f:
 				if len(line.strip()) < 2:
 					continue
 
-				# Remove abbreviations, symbols, and offensive words
+				# Remove abbreviations, symbols, variations, and offensive words
 				if "abbr." in line or \
 				   "Abbr." in line or \
 				   "[abbreviation" in line or \
 				   "symb." in line or \
+				   "var." in line or \
 				   "offens." in line:
 					continue
 
