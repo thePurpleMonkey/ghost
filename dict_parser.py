@@ -1,10 +1,14 @@
 import string, sys
 
+# Check version of Python
+if sys.version_info[0] < 3:
+	print("This program designed to be run with Python 3. Please run again with the Python version 3 interpreter.")
+	sys.exit()
+
 # Eliminate one letter "words" that appear in dictionary
 encountered_words = {"b", "c", "d", "e", "f", "g", "h", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"}
 
 translator=str.maketrans('','',string.digits)
-print("string.ascii_lowercase =", string.ascii_lowercase)
 
 with open("Oxford English Dictionary.txt", "r") as f:
 	with open(sys.argv[1] if len(sys.argv) > 1 else "result.txt", "w") as output:
@@ -14,16 +18,16 @@ with open("Oxford English Dictionary.txt", "r") as f:
 				if len(line.strip()) < 2:
 					continue
 
-				# Remove abbreviations, symbols, and old english words
+				# Remove abbreviations, symbols, and offensive words
 				if "abbr." in line or \
 				   "Abbr." in line or \
 				   "[abbreviation" in line or \
 				   "symb." in line or \
-				   "[old english" in line:
+				   "offens." in line:
 					continue
 
 				word = line.split()[0].lower()
-				
+
 				# Discard any words containing non-alphabetic characters
 				for letter in word:
 					if letter not in string.ascii_lowercase:
