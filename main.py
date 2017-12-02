@@ -11,11 +11,9 @@ if sys.version_info[0] < 3:
 	sys.exit()
 
 class State:
-	def __init__(self, prev, turn, challenge=False):
+	def __init__(self, prev, turn):
 		self.prev = prev
 		self.turn = turn
-		self.challenge = challenge
-		self.word = None
 
 	def __hash__(self):
 		return hash(self.prev)
@@ -35,12 +33,19 @@ class State:
 		
 	"""Return all valid successors of this state"""
 	def successors(self):
-		return list(set([State(self.prev + match[len(self.prev)+2], (self.turn+1)%2) for match in re.findall("\n{}..*\n".format(self.prev), words)]))
+		return list(set([State(self.prev + match[len(self.prev)+1], (self.turn+1)%2) for match in re.findall("\n{}..*\n".format(self.prev), words)]))
 
 """Return the state after the computer has made its move"""
 def computer_move(state):
 	#return State(state.prev, (state.turn+1)%2) # nop
-	return min_max_search(state)
+	next = min_max_search(state)
+	if next:
+		return next
+	else:
+		print("I can't think of a word that starts with those letters! (Is it a real word?)")
+		print(state.prev[:-1])
+		print("I was thinking of ", [state.prev for state in State(state.prev[:-1], 0).successors()])
+		return None
 
 """Perform Minimax search for optimal next move"""
 def min_max_search(state):
@@ -54,12 +59,10 @@ def min_max_search(state):
 
 	if len(successors) > 0:
 		# We found at least one valid successor
+		print("Considering: ", successors)
 		return sorted(successors, key=lambda x: x[0])[0][1]
 	else:
-		# There are no valid successors. Player must not have a word
-		state.challenge = True
-		state.turn = (state.turn+1)%2	# Change turn to player
-		return state
+		return None
 
 def max_search(state, alpha, beta):
 	if state.is_terminal():
@@ -98,15 +101,9 @@ def min_search(state, alpha, beta):
 
 """Return the state after the player has made their move"""
 def player_move(state):
-	print("Current letters:", state.prev)
-	if not state.challenge:
-		# Not being challenged, enter a letter
-		new_letter = input("Please enter a letter to play: ")[0].lower()
-		return State(state.prev + new_letter, (state.turn+1)%2)
-	else:
-		# We've been challenged. Must type in a valid word or we lose
-		state.word = input("You've been challenged! Please type a word that begins with the current letters: ").strip().lower()
-		return state
+	print("Current letters:", repr(state.prev))
+	new_letter = input("Please enter a letter to play: ")[0].lower()
+	return State(state.prev + new_letter, (state.turn+1)%2)
 
 class Node:
 	popMax = []	# Static class member
@@ -227,7 +224,7 @@ if __name__ == "__main__":
 
 	state = State("", turn)
 
-	while True:
+	while state:
 		# Check for game end at begining of turn
 		if state.is_terminal():
 			print("Game over")
@@ -237,15 +234,6 @@ if __name__ == "__main__":
 				print("You spelled '{}'. You lose. :(".format(state.prev))
 
 			break
-		if state.word:
-			is_word = bool(re.search("\n{}\n".format(state.word), words))
-			if (is_word and state.turn == 1) or (not is_word and state.turn == 0):
-				print("You win!")
-			else:
-				print("You lose.")
-
-			break
-
 
 		# Prompt player for move
 		state = players[state.turn](state)
