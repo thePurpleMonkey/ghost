@@ -42,9 +42,8 @@ def computer_move(state):
 	if next:
 		return next
 	else:
-		print("I can't think of a word that starts with those letters! (Is it a real word?)")
-		print(state.prev[:-1])
-		print("I was thinking of ", [state.prev for state in State(state.prev[:-1], 0).successors()])
+		print("I can't think of a word that starts with '{}'! (Is it a real word?)".format(state.prev))
+		print("I was thinking of ", ", ".join([i.strip() for i in re.findall("\n{}..*\n".format(state.prev[:-1]), words)]))
 		return None
 
 """Perform Minimax search for optimal next move"""
@@ -59,7 +58,7 @@ def min_max_search(state):
 
 	if len(successors) > 0:
 		# We found at least one valid successor
-		print("Considering: ", successors)
+		#print("Considering: ", sorted(successors, key=lambda x: x[0]))
 		return sorted(successors, key=lambda x: x[0])[0][1]
 	else:
 		return None
