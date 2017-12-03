@@ -1,6 +1,6 @@
 # coding=utf-8
 
-import sys, mmap, re, random, urllib.request
+import sys, re, random
 words = None
 
 infinity = float("inf")
@@ -9,6 +9,14 @@ infinity = float("inf")
 if sys.version_info[0] < 3:
 	print("This program designed to be run with Python 3. Please run again with the Python version 3 interpreter.")
 	sys.exit()
+
+class Stats:
+	nodes_expanded = 0
+	prunes = 0
+	cache_hits = 0
+
+	min_cache = {}
+	max_cache = {}
 
 class State:
 	def __init__(self, prev, turn):
@@ -38,7 +46,8 @@ class State:
 """Return the state after the computer has made its move"""
 def computer_move(state):
 	#return State(state.prev, (state.turn+1)%2) # nop
-	next = min_max_search(state)
+	#next = min_max_search(state)
+	next = min_max_brute_search(state)
 	if next:
 		return next
 	else:
@@ -97,6 +106,46 @@ def min_search(state, alpha, beta):
 		beta = min(beta, v)
 
 	return v
+
+"""Perform brute-force (no pruning) Minimax search for optimal next move"""
+def min_max_brute_search(state):
+	successors = []
+
+	# Iterate over each successor of this state
+	for successor in state.successors():
+		Stats.nodes_expanded += 1
+		result = min_brute_search(successor)
+
+		successors.append((result, successor))
+
+	if len(successors) > 0:
+		# We found at least one valid successor
+		#print("Considering: ", sorted(successors, key=lambda x: x[0]))
+		return sorted(successors, key=lambda x: x[0])[0][1]
+	else:
+		return None
+
+def max_brute_search(state):
+	if state.is_terminal():
+		return state.turn
+
+	successors = []
+	for successor in state.successors():
+		Stats.nodes_expanded += 1
+		successors.append(min_brute_search(successor))
+
+	return max(successors)
+
+def min_brute_search(state):
+	if state.is_terminal():
+		return state.turn
+
+	successors = []
+	for successor in state.successors():
+		Stats.nodes_expanded += 1
+		successors.append(max_brute_search(successor))
+
+	return min(successors)
 
 """Return the state after the player has made their move"""
 def player_move(state):
@@ -236,3 +285,5 @@ if __name__ == "__main__":
 
 		# Prompt player for move
 		state = players[state.turn](state)
+
+	print("Total nodes expanded:", Stats.nodes_expanded)

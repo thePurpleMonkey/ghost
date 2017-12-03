@@ -1,0 +1,10 @@
+$ python3 main.py oxford.txt
+Current letters: ''
+Please enter a letter to play: p
+Current letters: 'py'
+Please enter a letter to play: t
+Current letters: 'pyth'
+Please enter a letter to play: o
+Game over
+Your opponent spelled 'python'. You win!
+Total nodes expanded: 1156
