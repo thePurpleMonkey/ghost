@@ -49,6 +49,8 @@ class State:
 """Return the state after the computer has made its move"""
 def computer_move(state):
 	start_time = time.time()
+
+	print("Computer's move. Current letters are", state.prev)
 	
 	# next = min_max_search(state)
 	# next = min_max_brute_search(state)
@@ -58,10 +60,52 @@ def computer_move(state):
 	Stats.min_max_times.append(elapsed_time)
 
 	if next:
+		print("Computer playing letter '{}'".format(next.prev[-1]))
 		return next
 	else:
 		print("I can't think of a word that starts with '{}'! (Is it a real word?)".format(state.prev))
 		print("I was thinking of ", ", ".join([i.strip() for i in re.findall("\n{}..*\n".format(state.prev[:-1]), words)]))
+		return None
+
+"""Return the state after the computer has made its move"""
+def computer_counter_move(state):
+	# start_time = time.time()
+
+	print("Player 2's move. Current letters are:", state.prev)
+	
+	next = min_max_counter_search(state)
+	# next = min_max_brute_search(state)
+	# next = min_max_cache_search(state)
+
+	# elapsed_time = time.time() - start_time
+	# Stats.min_max_times.append(elapsed_time)
+
+	if next:
+		print("Player 2 playing letter '{}'".format(next.prev[-1]))
+		return next
+	else:
+		print("I can't think of a word that starts with '{}'! (Is it a real word?)".format(state.prev))
+		print("I was thinking of ", ", ".join([i.strip() for i in re.findall("\n{}..*\n".format(state.prev[:-1]), words)]))
+		return None
+
+"""Perform Minimax search for optimal next move"""
+def min_max_counter_search(state):
+	successors = []
+
+	# Iterate over each successor of this state
+	successors_ = state.successors()
+	Stats.branches.append(len(successors_))
+	for successor in successors_:
+		Stats.nodes_expanded += 1
+		result = max_search(successor, -infinity, infinity)
+
+		successors.append((result, successor))
+
+	if len(successors) > 0:
+		# We found at least one valid successor
+		#print("Considering: ", sorted(successors, key=lambda x: x[0]))
+		return sorted(successors, key=lambda x: x[0], reverse=True)[0][1]
+	else:
 		return None
 
 """Perform Minimax search for optimal next move"""
@@ -350,9 +394,10 @@ def fileparse(filename):
 
 if __name__ == "__main__":
 	# Set up players to alternate
-	players = (computer_move, player_move)
+	# players = (computer_move, player_move)
+	players = (computer_move, computer_counter_move)
 	turn = random.randint(0, 1)	# Choose a random player to go first
-	turn = 1
+	turn = 0
 
 	if len(sys.argv) != 2:
 		print("Usage: ", sys.argv[0], "dictionary_file.txt")
