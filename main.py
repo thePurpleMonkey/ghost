@@ -397,7 +397,7 @@ if __name__ == "__main__":
 	# players = (computer_move, player_move)
 	players = (computer_move, computer_counter_move)
 	turn = random.randint(0, 1)	# Choose a random player to go first
-	turn = 0
+	#turn = 0
 
 	if len(sys.argv) != 2:
 		print("Usage: ", sys.argv[0], "dictionary_file.txt")
