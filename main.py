@@ -1,6 +1,6 @@
 # coding=utf-8
 
-import sys, re, random
+import sys, re, random, time
 words = None
 
 infinity = float("inf")
@@ -14,9 +14,12 @@ class Stats:
 	nodes_expanded = 0
 	prunes = 0
 	cache_hits = 0
+	cache_misses = 0
+	branches = []
 
 	min_cache = {}
 	max_cache = {}
+	min_max_times = []
 
 class State:
 	def __init__(self, prev, turn):
@@ -45,9 +48,15 @@ class State:
 
 """Return the state after the computer has made its move"""
 def computer_move(state):
-	#return State(state.prev, (state.turn+1)%2) # nop
-	#next = min_max_search(state)
-	next = min_max_brute_search(state)
+	start_time = time.time()
+	
+	# next = min_max_search(state)
+	# next = min_max_brute_search(state)
+	next = min_max_cache_search(state)
+
+	elapsed_time = time.time() - start_time
+	Stats.min_max_times.append(elapsed_time)
+
 	if next:
 		return next
 	else:
@@ -60,7 +69,10 @@ def min_max_search(state):
 	successors = []
 
 	# Iterate over each successor of this state
-	for successor in state.successors():
+	successors_ = state.successors()
+	Stats.branches.append(len(successors_))
+	for successor in successors_:
+		Stats.nodes_expanded += 1
 		result = min_search(successor, -infinity, infinity)
 
 		successors.append((result, successor))
@@ -78,7 +90,10 @@ def max_search(state, alpha, beta):
 
 	v = -infinity
 
-	for successor in state.successors():
+	successors_ = state.successors()
+	Stats.branches.append(len(successors_))
+	for successor in successors_:
+		Stats.nodes_expanded += 1
 		result = min_search(successor, alpha, beta)
 
 		v = max(v, result)
@@ -96,7 +111,10 @@ def min_search(state, alpha, beta):
 
 	v = infinity
 
-	for successor in state.successors():
+	successors_ = state.successors()
+	Stats.branches.append(len(successors_))
+	for successor in successors_:
+		Stats.nodes_expanded += 1
 		result = max_search(successor, alpha, beta)
 
 		v = min(v, result)
@@ -112,7 +130,9 @@ def min_max_brute_search(state):
 	successors = []
 
 	# Iterate over each successor of this state
-	for successor in state.successors():
+	successors_ = state.successors()
+	Stats.branches.append(len(successors_))
+	for successor in successors_:
 		Stats.nodes_expanded += 1
 		result = min_brute_search(successor)
 
@@ -130,7 +150,10 @@ def max_brute_search(state):
 		return state.turn
 
 	successors = []
-	for successor in state.successors():
+
+	successors_ = state.successors()
+	Stats.branches.append(len(successors_))
+	for successor in successors_:
 		Stats.nodes_expanded += 1
 		successors.append(min_brute_search(successor))
 
@@ -141,11 +164,87 @@ def min_brute_search(state):
 		return state.turn
 
 	successors = []
-	for successor in state.successors():
+
+	successors_ = state.successors()
+	Stats.branches.append(len(successors_))
+	for successor in successors_:
 		Stats.nodes_expanded += 1
 		successors.append(max_brute_search(successor))
 
 	return min(successors)
+
+"""Perform Minimax search for optimal next move"""
+def min_max_cache_search(state):
+	successors = []
+	result = None
+
+	# Iterate over each successor of this state
+	successors_ = state.successors()
+	Stats.branches.append(len(successors_))
+	for successor in successors_:
+		if successor in Stats.min_cache:
+			Stats.cache_hits += 1
+			result = Stats.min_cache[successor]
+		else:
+			Stats.cache_misses += 1
+			Stats.nodes_expanded += 1
+			result = min_cache_search(successor, -infinity, infinity)
+
+		successors.append((result, successor))
+
+	if len(successors) > 0:
+		# We found at least one valid successor
+		#print("Considering: ", sorted(successors, key=lambda x: x[0]))
+		return sorted(successors, key=lambda x: x[0])[0][1]
+	else:
+		return None
+
+def max_cache_search(state, alpha, beta):
+	if state.is_terminal():
+		return state.turn
+
+	v = -infinity
+
+	successors_ = state.successors()
+	Stats.branches.append(len(successors_))
+	for successor in successors_:
+		Stats.nodes_expanded += 1
+		result = min_cache_search(successor, alpha, beta)
+
+		v = max(v, result)
+
+		if v >= beta:
+			return v
+
+		alpha = max(alpha, v)
+
+	return v
+
+def min_cache_search(state, alpha, beta):
+	if state.is_terminal():
+		return state.turn
+
+	v = infinity
+
+	successors_ = state.successors()
+	Stats.branches.append(len(successors_))
+	for successor in successors_:
+		if successor in Stats.min_cache:
+			Stats.cache_hits += 1
+			return Stats.min_cache[successor]
+		else:
+			Stats.nodes_expanded += 1
+			Stats.cache_misses += 1
+			result = max_cache_search(successor, alpha, beta)
+			Stats.min_cache[successor] = result
+
+		v = min(v, result)
+		if v <= alpha:
+			return v
+
+		beta = min(beta, v)
+
+	return v
 
 """Return the state after the player has made their move"""
 def player_move(state):
@@ -253,22 +352,13 @@ if __name__ == "__main__":
 	# Set up players to alternate
 	players = (computer_move, player_move)
 	turn = random.randint(0, 1)	# Choose a random player to go first
-
-	# try:
-	# 	# Get online dictionary
-	# 	words = urllib.request.urlopen("https://raw.githubusercontent.com/eneko/data-repository/master/data/words.txt").read().decode("utf-8")
-	# 	# print(type(words))
-	# 	# print("Newline style: ", ("Windows \\r\\n" if "\r\n" in words >= 0 else "Unix \\n"))
-	# except Exception as e:
-	# 	print("Error obtaining online dictionary: {}".format(e))
-	# 	print("Falling back to local dictionary")
+	turn = 1
 
 	if len(sys.argv) != 2:
 		print("Usage: ", sys.argv[0], "dictionary_file.txt")
 		sys.exit(2)
 
 	words = open(sys.argv[1], 'rt').read()
-		# print("Newline style: ", ("Windows \\r\\n" if words.find("\r\n") >= 0 else "Unix \\n"))
 
 	state = State("", turn)
 
@@ -286,4 +376,11 @@ if __name__ == "__main__":
 		# Prompt player for move
 		state = players[state.turn](state)
 
-	print("Total nodes expanded:", Stats.nodes_expanded)
+	print("Stats:")
+	print("    Total nodes expanded:", Stats.nodes_expanded)
+	print("    Time for each minimax run:", Stats.min_max_times)
+	print(Stats.branches)
+	print("    Maximum branching factor:", max(Stats.branches))
+	print("    Average branching factor:", (sum(Stats.branches))/(len(Stats.branches)))
+	if Stats.cache_hits + Stats.cache_misses > 0:
+		print("    Cache hit ratio:", (Stats.cache_hits)/(Stats.cache_hits + Stats.cache_misses))
