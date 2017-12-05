@@ -8,7 +8,7 @@ if sys.version_info[0] < 3:
 # Eliminate one letter "words" that appear in dictionary
 encountered_words = {"b", "c", "d", "e", "f", "g", "h", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"}
 
-translator=str.maketrans('','',string.digits)
+translator=str.maketrans('','',string.digits + '-')
 
 with open("Oxford English Dictionary.txt", "r") as f:
 	with open(sys.argv[1] if len(sys.argv) > 1 else "result.txt", "w") as output:
