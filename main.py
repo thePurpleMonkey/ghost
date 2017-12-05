@@ -27,10 +27,10 @@ class State:
 		self.turn = turn
 
 	def __hash__(self):
-		return hash(self.prev)
+		return hash((self.prev, self.turn))
 
 	def __eq__(self, other):
-		return self.prev == other.prev
+		return (self.prev == other.prev) and (self.turn == other.turn)
 
 	def __repr__(self):
 		return str(self)
@@ -406,6 +406,7 @@ if __name__ == "__main__":
 	words = open(sys.argv[1], 'rt').read()
 
 	state = State("", turn)
+	print(state.successors())
 
 	while state:
 		# Check for game end at begining of turn

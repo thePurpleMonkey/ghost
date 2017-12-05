@@ -1,3 +1,5 @@
+# coding=utf-8
+
 import string, sys
 
 # Check version of Python
@@ -8,7 +10,7 @@ if sys.version_info[0] < 3:
 # Eliminate one letter "words" that appear in dictionary
 encountered_words = {"b", "c", "d", "e", "f", "g", "h", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"}
 
-translator=str.maketrans('','',string.digits + '-')
+translator=str.maketrans('','',string.digits)
 
 with open("Oxford English Dictionary.txt", "r") as f:
 	with open(sys.argv[1] if len(sys.argv) > 1 else "result.txt", "w") as output:
@@ -30,11 +32,10 @@ with open("Oxford English Dictionary.txt", "r") as f:
 				word = line.split()[0].lower()
 
 				# Discard any words containing non-alphabetic characters
-				for letter in word:
-					if letter not in string.ascii_lowercase:
-						# Pretend we've seen this word before. It will get thrown out in later processing. 
-						encountered_words.add(word)
-						break
+				if '-' in word or '\'' in word or 'é' in word or '—' in word or 'œ' in word:
+					# Pretend we've seen this word before. It will get thrown out in later processing. 
+					encountered_words.add(word)
+					continue
 
 				# Remove numbers
 				word=word.translate(translator)
